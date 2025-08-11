@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2196F3">
+    <title>MedControle - Controle de Medicamentos</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Controle seus horários de medicamento de forma simples e eficiente">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="container">
+                <h1><i class="fas fa-pills"></i> MedControle</h1>
+                <button id="add-medicine-btn" class="btn-primary">
+                    <i class="fas fa-plus"></i> Novo Remédio
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="container">
+                <!-- Dashboard Cards -->
+                <section class="dashboard">
+                    <div class="card overview-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-chart-line"></i> Visão Geral</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <div class="stat-number" id="total-medicines">0</div>
+                                    <div class="stat-label">Remédios</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number" id="today-doses">0</div>
+                                    <div class="stat-label">Doses Hoje</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number" id="pending-doses">0</div>
+                                    <div class="stat-label">Pendentes</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Medicines List -->
+                    <section class="medicines-section">
+                        <h2><i class="fas fa-list"></i> Seus Remédios</h2>
+                        <div id="medicines-list" class="medicines-grid">
+                            <!-- Medicines will be populated here -->
+                        </div>
+                    </section>
+                </section>
+            </div>
+        </main>
+
+        <!-- Add Medicine Modal -->
+        <div id="medicine-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Adicionar Novo Remédio</h3>
+                    <button class="close-btn" onclick="closeModal()">&times;</button>
+                </div>
+                <form id="medicine-form" class="medicine-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="medicine-name">Nome do Remédio</label>
+                            <input type="text" id="medicine-name" name="medicine-name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="medicine-dosage">Dosagem</label>
+                            <input type="text" id="medicine-dosage" name="medicine-dosage" placeholder="Ex: 500mg" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="frequency-type">Frequência</label>
+                            <select id="frequency-type" name="frequency-type" required>
+                                <option value="daily">Diário</option>
+                                <option value="specific-days">Dias Específicos</option>
+                                <option value="weekly">Semanal</option>
+                                <option value="custom">Personalizado</option>
+                            </select>
+                        </div>
+                        
+                        <div id="frequency-options" class="frequency-options">
+                            <!-- Dynamic frequency options -->
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="start-date">Data de Início</label>
+                            <input type="date" id="start-date" name="start-date" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="duration-days">Duração (dias)</label>
+                            <input type="number" id="duration-days" name="duration-days" min="1" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="time">Horário</label>
+                            <input type="time" id="time" name="time" required>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeModal()">Cancelar</button>
+                        <button type="submit" class="btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+=======
+        <!-- Add Medicine Modal -->
+        <div id="medicine-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Adicionar Novo Remédio</h3>
+                    <button class="close-btn" onclick="closeModal()">&times;</button>
+                </div>
+                <form id="medicine-form" class="medicine-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="medicine-name">Nome do Remédio</label>
+                            <input type="text" id="medicine-name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="medicine-dosage">Dosagem</label>
+                            <input type="text" id="medicine-dosage" placeholder="Ex: 500mg" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="frequency-type">Frequência</label>
+                            <select id="frequency-type" required>
+                                <option value="daily">Diário</option>
+                                <option value="specific-days">Dias Específicos</option>
+                                <option value="weekly">Semanal</option>
+                                <option value="custom">Personalizado</option>
+                            </select>
+                        </div>
+                        
+                        <div id="frequency-options" class="frequency-options">
+                            <!-- Dynamic frequency options -->
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="start-date">Data de Início</label>
+                            <input type="date" id="start-date" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="duration-days">Duração (dias)</label>
+                            <input type="number" id="duration-days" min="1" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="time">Horário</label>
+                            <input type="time" id="time" required>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeModal()">Cancelar</button>
+                        <button type="submit" class="btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Notification Permission Modal -->
+        <div id="notification-modal" class="modal">
+            <div class="modal-content">
+                <h3>Permitir Notificações</h3>
+                <p>Para receber lembretes de medicamentos, precisamos da sua permissão para enviar notificações.</p>
+                <div class="form-actions">
+                    <button class="btn-primary" onclick="requestNotificationPermission()">Permitir</button>
+                    <button class="btn-secondary" onclick="closeNotificationModal()">Agora não</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/global-functions.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
