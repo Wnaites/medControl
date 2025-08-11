@@ -365,3 +365,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Make app globally available
 window.MedControleApp = MedControleApp;
+
