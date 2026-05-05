@@ -1,7 +1,9 @@
 // Notifications module for handling push notifications
 class NotificationManager {
-  constructor() {
+  constructor(storageRef = null) {
     this.permission = 'default';
+    this.storage = storageRef || (typeof storage !== 'undefined' ? storage : null);
+    this.scheduledTimeouts = [];
     this.checkPermission();
   }
 
@@ -43,7 +45,9 @@ class NotificationManager {
 
   // Schedule notifications for medicines
   scheduleNotifications() {
-    const medicines = storage.getMedicines();
+    if (!this.storage) return;
+    
+    const medicines = this.storage.getMedicines();
     
     medicines.forEach(medicine => {
       this.scheduleMedicineNotifications(medicine);
@@ -163,11 +167,17 @@ class NotificationManager {
     const delay = notificationTime.getTime() - Date.now();
     
     if (delay > 0) {
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         if (this.permission === 'granted') {
           this.showNotification(title, options, medicine);
         }
       }, delay);
+      this.scheduledTimeouts.push(timeoutId);
+    } else {
+      // If the time is in the past, schedule immediately (for testing)
+      if (this.permission === 'granted') {
+        this.showNotification(title, options, medicine);
+      }
     }
   }
 
@@ -175,9 +185,11 @@ class NotificationManager {
   showNotification(title, options, medicine) {
     if (this.permission !== 'granted') return;
 
-    navigator.serviceWorker.ready.then(registration => {
-      registration.showNotification(title, options);
-    });
+    if (navigator && navigator.serviceWorker && navigator.serviceWorker.ready) {
+      navigator.serviceWorker.ready.then(registration => {
+        registration.showNotification(title, options);
+      });
+    }
 
     // Also show desktop notification
     new Notification(title, options);
@@ -193,7 +205,9 @@ class NotificationManager {
     if (action === 'taken') {
       // Mark dose as taken
       const medicineId = this.extractMedicineIdFromTag(tag);
-      storage.markDoseTaken(medicineId, new Date());
+      if (this.storage) {
+        this.storage.markDoseTaken(medicineId, new Date());
+      }
       
       // Update UI
       if (window.ui) {
@@ -201,12 +215,13 @@ class NotificationManager {
       }
     } else if (action === 'snooze') {
       // Snooze for 15 minutes
-      setTimeout(() => {
+      const timeout = setTimeout(() => {
         this.showNotification(event.notification.title, {
           body: event.notification.body,
           icon: event.notification.icon
         });
       }, 15 * 60 * 1000);
+      this.scheduledTimeouts.push(timeout);
     }
   }
 
@@ -219,6 +234,15 @@ class NotificationManager {
   // Cancel all notifications for a medicine
   cancelMedicineNotifications(medicineId) {
     console.log(`Canceling notifications for medicine ${medicineId}`);
+    // Clear any scheduled timeouts
+    this.scheduledTimeouts.forEach(timeout => clearTimeout(timeout));
+    this.scheduledTimeouts = [];
+  }
+
+  // Clear all scheduled timeouts (useful for cleanup)
+  clearAllTimeouts() {
+    this.scheduledTimeouts.forEach(timeout => clearTimeout(timeout));
+    this.scheduledTimeouts = [];
   }
 
   // Test notification
@@ -235,6 +259,9 @@ class NotificationManager {
 // Export for testing
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { NotificationManager };
+} else {
+  // Make available globally for browser
+  window.NotificationManager = NotificationManager;
 }
 
 // Create global instance

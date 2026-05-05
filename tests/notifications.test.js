@@ -3,15 +3,14 @@
  */
 
 // Mock dependencies before importing
-global.Notification = class Notification {
-  static permission = 'default';
-  static requestPermission = jest.fn(() => Promise.resolve('granted'));
-  
-  constructor(title, options) {
-    this.title = title;
-    this.options = options;
-  }
-};
+const mockNotification = jest.fn(function(title, options) {
+  this.title = title;
+  this.options = options;
+});
+mockNotification.permission = 'default';
+mockNotification.requestPermission = jest.fn(() => Promise.resolve('granted'));
+
+global.Notification = mockNotification;
 
 // Mock storage dependency
 const mockStorage = {
@@ -19,6 +18,25 @@ const mockStorage = {
   markDoseTaken: jest.fn()
 };
 global.storage = mockStorage;
+
+// Mock navigator.serviceWorker with proper mock functions
+const mockShowNotification = jest.fn();
+const mockServiceWorkerReady = {
+  then: jest.fn((cb) => {
+    cb({ showNotification: mockShowNotification });
+    return mockServiceWorkerReady;
+  })
+};
+
+global.navigator = {
+  serviceWorker: {
+    ready: mockServiceWorkerReady,
+    addEventListener: jest.fn()
+  }
+};
+
+// Mock window.alert
+window.alert = jest.fn();
 
 describe('NotificationManager', () => {
   let NotificationManager;
@@ -30,9 +48,9 @@ describe('NotificationManager', () => {
     global.Notification.permission = 'default';
     
     // Load the notifications module after resetting
-    require('../js/notifications.js');
-    NotificationManager = global.NotificationManager;
-    notificationManagerInstance = new NotificationManager();
+    const module = require('../js/notifications.js');
+    NotificationManager = module.NotificationManager || global.NotificationManager;
+    notificationManagerInstance = new NotificationManager(mockStorage);
   });
 
   describe('Constructor', () => {
@@ -334,18 +352,41 @@ describe('NotificationManager', () => {
         dosage: '500mg'
       };
       
+      // Set notification time in the future (1 hour from now)
       const notificationTime = new Date();
       notificationTime.setHours(notificationTime.getHours() + 1);
       
-      jest.useFakeTimers();
-      notificationManagerInstance.showNotification = jest.fn();
+      jest.useFakeTimers({ now: Date.now() });
+      const showNotificationSpy = jest.fn();
+      notificationManagerInstance.showNotification = showNotificationSpy;
+      notificationManagerInstance.permission = 'granted';
       notificationManagerInstance.createNotification(medicine, notificationTime);
       
-      jest.advanceTimersByTime(60000);
+      // Fast-forward until all timers are executed (1 hour + buffer)
+      jest.advanceTimersByTime(61 * 60 * 1000);
       
-      expect(notificationManagerInstance.showNotification).toHaveBeenCalled();
+      expect(showNotificationSpy).toHaveBeenCalled();
       
       jest.useRealTimers();
+    });
+
+    test('should immediately show notification if time is in the past', () => {
+      const medicine = {
+        id: '1',
+        name: 'Aspirina',
+        dosage: '500mg'
+      };
+      
+      // Set notification time in the past
+      const notificationTime = new Date();
+      notificationTime.setHours(notificationTime.getHours() - 1);
+      
+      notificationManagerInstance.permission = 'granted';
+      const showNotificationSpy = jest.fn();
+      notificationManagerInstance.showNotification = showNotificationSpy;
+      notificationManagerInstance.createNotification(medicine, notificationTime);
+      
+      expect(showNotificationSpy).toHaveBeenCalled();
     });
   });
 
@@ -355,10 +396,13 @@ describe('NotificationManager', () => {
       
       notificationManagerInstance.showNotification('Test', {}, {});
       
-      expect(navigator.serviceWorker.ready.then).not.toHaveBeenCalled();
+      expect(mockServiceWorkerReady.then).not.toHaveBeenCalled();
     });
 
     test('should show notification via service worker', () => {
+      // Reset mocks first
+      jest.clearAllMocks();
+      
       notificationManagerInstance.permission = 'granted';
       
       const title = 'Test Notification';
@@ -367,7 +411,7 @@ describe('NotificationManager', () => {
       
       notificationManagerInstance.showNotification(title, options, medicine);
       
-      expect(navigator.serviceWorker.ready.then).toHaveBeenCalled();
+      expect(mockServiceWorkerReady.then).toHaveBeenCalled();
     });
   });
 
@@ -456,12 +500,16 @@ describe('NotificationManager', () => {
   });
 
   describe('testNotification', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
     test('should show test notification when permission is granted', () => {
       notificationManagerInstance.permission = 'granted';
       
       notificationManagerInstance.testNotification();
       
-      expect(global.Notification).toHaveBeenCalledWith(
+      expect(mockNotification).toHaveBeenCalledWith(
         'Teste de Notificação',
         expect.objectContaining({
           body: 'Suas notificações estão funcionando corretamente!'
@@ -474,7 +522,7 @@ describe('NotificationManager', () => {
       
       notificationManagerInstance.testNotification();
       
-      expect(global.Notification).not.toHaveBeenCalled();
+      expect(mockNotification).not.toHaveBeenCalled();
     });
   });
 });
