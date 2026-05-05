@@ -232,6 +232,11 @@ class NotificationManager {
   }
 }
 
+// Export for testing
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { NotificationManager };
+}
+
 // Create global instance
 const notificationManager = new NotificationManager();
 
