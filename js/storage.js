@@ -154,5 +154,10 @@ class StorageManager {
   }
 }
 
+// Export for testing
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { StorageManager };
+}
+
 // Create global instance
 const storage = new StorageManager();
