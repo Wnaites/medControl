@@ -1,1 +1,1 @@
-Nothing should be ignored in this case, as the changes only include source files (.js, .md) and test files (.test.js), which are not build artifacts, dependencies, or temporary files.
+Nothing needs to be added to the .gitignore file since only JavaScript source files are being tracked in this repository.

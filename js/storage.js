@@ -1,4 +1,6 @@
 // Storage module for managing medicine data
+import { generateId } from './utils.js';
+
 class StorageManager {
   constructor() {
     this.storageKey = 'medcontrole_medicines';
@@ -16,7 +18,7 @@ class StorageManager {
       }
     } else {
       // Add new medicine
-      medicine.id = this.generateId();
+      medicine.id = generateId();
       medicine.createdAt = new Date().toISOString();
       medicines.push(medicine);
     }
@@ -97,7 +99,7 @@ class StorageManager {
     });
   }
 
-  // Helper methods
+  // Helper methods - kept for backward compatibility
   generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
   }
@@ -154,9 +156,12 @@ class StorageManager {
   }
 }
 
-// Export for testing
+// Export for testing and browser
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { StorageManager };
+} else {
+  // Make available globally for browser
+  window.StorageManager = StorageManager;
 }
 
 // Create global instance
