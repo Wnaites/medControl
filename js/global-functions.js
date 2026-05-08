@@ -13,6 +13,11 @@ function closeNotificationModal() {
   document.getElementById('notification-modal').style.display = 'none';
 }
 
+// Close all doses modal
+function closeAllDosesModal() {
+  document.getElementById('all-doses-modal').style.display = 'none';
+}
+
 // Request notification permission
 async function requestNotificationPermission() {
   if ('Notification' in window) {
@@ -34,4 +39,5 @@ window.addEventListener('click', (e) => {
 // Add to window object for global access
 window.closeModal = closeModal;
 window.closeNotificationModal = closeNotificationModal;
+window.closeAllDosesModal = closeAllDosesModal;
 window.requestNotificationPermission = requestNotificationPermission;

@@ -1,4 +1,10 @@
 // Test setup file for Jest
+
+// Add TextEncoder/TextDecoder for jsdom compatibility
+const { TextEncoder, TextDecoder } = require('util');
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+
 // Mock localStorage
 const localStorageMock = {
   store: {},
