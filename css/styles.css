@@ -383,6 +383,221 @@ body {
   margin: 0;
 }
 
+/* Help Text */
+.help-text {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Schedule List */
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.schedule-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--background-color);
+  border-radius: var(--border-radius);
+  border-left: 4px solid var(--primary-color);
+  transition: var(--transition);
+}
+
+.schedule-item:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow);
+}
+
+.schedule-item.completed {
+  border-left-color: var(--success-color);
+  opacity: 0.7;
+}
+
+.schedule-item.overdue {
+  border-left-color: var(--warning-color);
+  background: rgba(255, 87, 34, 0.1);
+}
+
+.schedule-time {
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 80px;
+}
+
+.schedule-info {
+  flex: 1;
+  margin: 0 1rem;
+}
+
+.schedule-medicine {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.schedule-dosage {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.schedule-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.schedule-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.schedule-status.pending {
+  background: rgba(33, 150, 243, 0.1);
+  color: var(--primary-color);
+}
+
+.schedule-status.completed {
+  background: rgba(76, 175, 80, 0.1);
+  color: var(--success-color);
+}
+
+.schedule-status.overdue {
+  background: rgba(255, 87, 34, 0.1);
+  color: var(--warning-color);
+}
+
+/* Benefits List */
+.benefits-list {
+  list-style: none;
+  margin: 1rem 0;
+  padding: 0;
+}
+
+.benefits-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  color: var(--text-primary);
+}
+
+.benefits-list i {
+  color: var(--primary-color);
+  width: 20px;
+  text-align: center;
+}
+
+/* Modal Body */
+.modal-body {
+  padding: 1.5rem;
+}
+
+/* Toast Container */
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast {
+  background: var(--surface-color);
+  color: var(--text-primary);
+  padding: 1rem 1.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-hover);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 300px;
+  max-width: 500px;
+  transform: translateX(120%);
+  transition: transform 0.3s ease-in-out;
+  border-left: 4px solid var(--success-color);
+}
+
+.toast.show {
+  transform: translateX(0);
+}
+
+.toast.error {
+  border-left-color: var(--warning-color);
+}
+
+.toast.warning {
+  border-left-color: var(--secondary-color);
+}
+
+.toast.info {
+  border-left-color: var(--primary-color);
+}
+
+@media (max-width: 480px) {
+  #toast-container {
+    left: 20px;
+    right: 20px;
+    bottom: 10px;
+  }
+  
+  .toast {
+    min-width: auto;
+    width: 100%;
+  }
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-secondary);
+}
+
+.empty-state i {
+  color: var(--primary-color);
+  opacity: 0.5;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+/* Responsive adjustments for schedule */
+@media (max-width: 768px) {
+  .schedule-item {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .schedule-time {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .schedule-info {
+    width: calc(100% - 80px);
+    margin: 0;
+  }
+  
+  .schedule-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
 /* Modal Form Specific Styles */
 .medicine-form {
   margin: 0;

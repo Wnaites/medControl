@@ -1,7 +1,13 @@
 // Storage module for managing medicine data
+
 class StorageManager {
   constructor() {
     this.storageKey = 'medcontrole_medicines';
+  }
+  
+  // Generate unique ID
+  generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
   }
 
   // Save medicine to localStorage
@@ -63,7 +69,7 @@ class StorageManager {
       }
       
       medicine.dosesTaken.push({
-        time: doseTime,
+        time: doseTime instanceof Date ? doseTime.toISOString() : String(doseTime),
         takenAt: new Date().toISOString()
       });
       
@@ -98,10 +104,6 @@ class StorageManager {
   }
 
   // Helper methods
-  generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
-  }
-
   getLastDoseTime(medicine) {
     const now = new Date();
     const [hours, minutes] = medicine.time.split(':');
@@ -154,10 +156,13 @@ class StorageManager {
   }
 }
 
-// Export for testing
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { StorageManager };
-}
-
 // Create global instance
 const storage = new StorageManager();
+
+// Export for testing and browser
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { StorageManager, storage };
+} else {
+  window.StorageManager = StorageManager;
+  window.storage = storage;
+}

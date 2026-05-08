@@ -1,10 +1,25 @@
 // Notifications module for handling push notifications
+
 class NotificationManager {
-  constructor(storageRef = null) {
+  constructor(options = {}) {
     this.permission = 'default';
-    this.storage = storageRef || (typeof storage !== 'undefined' ? storage : null);
+    this.storage = options.storage || (typeof storage !== 'undefined' ? storage : null);
     this.scheduledTimeouts = [];
+    this.NotificationClass = options.NotificationClass || (typeof Notification !== 'undefined' ? Notification : null);
+    this.navigator = options.navigator || (typeof navigator !== 'undefined' ? navigator : null);
+    
+    if (!options.skipInit) {
+      this.init();
+    }
+  }
+  
+  init() {
     this.checkPermission();
+  }
+  
+  // Cleanup method for tests
+  destroy() {
+    this.clearAllTimeouts();
   }
 
   // Check notification permission
@@ -58,88 +73,143 @@ class NotificationManager {
   scheduleMedicineNotifications(medicine) {
     const now = new Date();
     const startDate = new Date(medicine.startDate);
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + parseInt(medicine.durationDays));
+    const endDate = this.calculateEndDate(medicine.startDate, medicine.durationDays);
 
     // Only schedule if medicine is active
     if (now > endDate) return;
 
-    const [hours, minutes] = medicine.time.split(':');
+    // Get all scheduled doses for this medicine
+    const allDoses = this.getAllScheduledDoses(medicine);
     
-    // Calculate next notification time
-    let nextNotification = new Date();
-    nextNotification.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    // Schedule each dose
+    allDoses.forEach(doseTime => {
+      this.createNotification(medicine, doseTime);
+    });
+  }
 
-    // If time has passed today, schedule for tomorrow
-    if (nextNotification < now) {
-      nextNotification.setDate(nextNotification.getDate() + 1);
+  // Calculate end date helper
+  calculateEndDate(startDate, durationDays) {
+    const start = new Date(startDate);
+    const end = new Date(start);
+    end.setDate(end.getDate() + parseInt(durationDays));
+    return end;
+  }
+
+  // Get all scheduled doses for a medicine
+  getAllScheduledDoses(medicine) {
+    const doses = [];
+    const start = new Date(medicine.startDate);
+    const end = this.calculateEndDate(medicine.startDate, medicine.durationDays);
+    const now = new Date();
+    
+    // Iterate through each day of treatment
+    for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+      // Skip if day doesn't match frequency
+      if (!this.shouldDoseOnDay(medicine, date)) {
+        continue;
+      }
+      
+      // Get doses for this day
+      const dayDoses = this.getDosesForDay(medicine, date);
+      
+      // Only include future doses
+      dayDoses.forEach(dose => {
+        if (dose > now) {
+          doses.push(dose);
+        }
+      });
     }
+    
+    return doses;
+  }
 
-    // Schedule based on frequency
+  // Check if should dose on a specific day
+  shouldDoseOnDay(medicine, date) {
+    const dayOfWeek = date.getDay();
+    const start = new Date(medicine.startDate);
+    const end = this.calculateEndDate(medicine.startDate, medicine.durationDays);
+    
+    // Check if date is within medicine period
+    if (date < start || date > end) {
+      return false;
+    }
+    
+    // Check frequency-specific rules
     switch (medicine.frequencyType) {
       case 'daily':
-        this.scheduleDailyNotification(medicine, nextNotification);
-        break;
+        return true;
+        
       case 'specific-days':
-        this.scheduleSpecificDaysNotification(medicine, nextNotification);
-        break;
+        const specificDays = medicine.specificDays || [];
+        return specificDays.includes(dayOfWeek);
+        
       case 'weekly':
-        this.scheduleWeeklyNotification(medicine, nextNotification);
-        break;
+        return dayOfWeek === start.getDay();
+        
       case 'custom':
-        this.scheduleCustomNotification(medicine, nextNotification);
+        return true;
+        
+      default:
+        return false;
+    }
+  }
+
+  // Get doses for a specific day
+  getDosesForDay(medicine, targetDate = new Date()) {
+    const doses = [];
+    const start = new Date(medicine.startDate);
+    const end = this.calculateEndDate(medicine.startDate, medicine.durationDays);
+    
+    // Check if targetDate is within medicine period
+    const targetStart = new Date(targetDate);
+    targetStart.setHours(0, 0, 0, 0);
+    const targetEnd = new Date(targetDate);
+    targetEnd.setHours(23, 59, 59, 999);
+    
+    if (targetStart < start || targetStart > end) {
+      return doses;
+    }
+    
+    // Check if dose should occur on this day based on frequency
+    if (!this.shouldDoseOnDay(medicine, targetDate)) {
+      return doses;
+    }
+    
+    // Generate all doses for this day based on frequency type
+    switch (medicine.frequencyType) {
+      case 'daily':
+      case 'specific-days':
+      case 'weekly':
+        // Single daily dose at specified time
+        doses.push(this.createDoseTime(targetDate, medicine.time));
+        break;
+        
+      case 'custom':
+        // Multiple doses per day based on interval
+        const interval = parseInt(medicine.customInterval) || 8;
+        const dosesPerDay = Math.floor(24 / interval);
+        
+        for (let i = 0; i < dosesPerDay; i++) {
+          const doseTime = new Date(targetStart);
+          doseTime.setHours(i * interval, 0, 0, 0);
+          
+          // Only add if it's not in the past
+          if (doseTime >= new Date()) {
+            doses.push(doseTime);
+          }
+        }
         break;
     }
-  }
-
-  // Schedule daily notifications
-  scheduleDailyNotification(medicine, startTime) {
-    const duration = parseInt(medicine.durationDays);
     
-    for (let i = 0; i < duration; i++) {
-      const notificationTime = new Date(startTime);
-      notificationTime.setDate(notificationTime.getDate() + i);
-      
-      if (notificationTime > new Date()) {
-        this.createNotification(medicine, notificationTime);
-      }
-    }
+    return doses;
   }
 
-  // Schedule specific days notifications
-  scheduleSpecificDaysNotification(medicine, startTime) {
-    const days = medicine.specificDays || [];
-    const duration = parseInt(medicine.durationDays);
-    
-    for (let i = 0; i < duration; i++) {
-      const currentDate = new Date(startTime);
-      currentDate.setDate(currentDate.getDate() + i);
-      
-      const dayOfWeek = currentDate.getDay();
-      if (days.includes(dayOfWeek)) {
-        this.createNotification(medicine, currentDate);
-      }
-    }
-  }
-
-  // Schedule weekly notifications
-  scheduleWeeklyNotification(medicine, startTime) {
-    const duration = parseInt(medicine.durationDays);
-    const weeks = Math.ceil(duration / 7);
-    
-    for (let i = 0; i < weeks; i++) {
-      const notificationTime = new Date(startTime);
-      notificationTime.setDate(notificationTime.getDate() + (i * 7));
-      
-      if (notificationTime > new Date()) {
-        this.createNotification(medicine, notificationTime);
-      }
-    }
-  }
-
-  // Schedule custom notifications
-  scheduleCustomNotification(medicine, startTime) {
-    console.log('Custom notification scheduling not implemented yet');
+  // Create dose time helper
+  createDoseTime(date, time) {
+    const [hours, minutes] = time.split(':');
+    const doseTime = new Date(date);
+    doseTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    return doseTime;
   }
 
   // Create notification
@@ -163,7 +233,7 @@ class NotificationManager {
       ]
     };
 
-    // Use setTimeout for scheduling (simplified approach)
+    // Use setTimeout for scheduling
     const delay = notificationTime.getTime() - Date.now();
     
     if (delay > 0) {
@@ -185,14 +255,19 @@ class NotificationManager {
   showNotification(title, options, medicine) {
     if (this.permission !== 'granted') return;
 
-    if (navigator && navigator.serviceWorker && navigator.serviceWorker.ready) {
-      navigator.serviceWorker.ready.then(registration => {
+    const nav = this.navigator || (typeof navigator !== 'undefined' ? navigator : null);
+    
+    if (nav && nav.serviceWorker && nav.serviceWorker.ready) {
+      nav.serviceWorker.ready.then(registration => {
         registration.showNotification(title, options);
       });
     }
 
     // Also show desktop notification
-    new Notification(title, options);
+    const NotificationClass = this.NotificationClass || (typeof Notification !== 'undefined' ? Notification : null);
+    if (NotificationClass) {
+      new NotificationClass(title, options);
+    }
   }
 
   // Handle notification click
@@ -256,16 +331,17 @@ class NotificationManager {
   }
 }
 
-// Export for testing
+// Export for testing and browser
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { NotificationManager };
 } else {
-  // Make available globally for browser
   window.NotificationManager = NotificationManager;
 }
 
-// Create global instance
-const notificationManager = new NotificationManager();
+// Create global instance with default storage
+const notificationManager = new NotificationManager({
+  storage: typeof storage !== 'undefined' ? storage : null
+});
 
 // Listen for notification clicks
 if ('serviceWorker' in navigator) {

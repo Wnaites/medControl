@@ -1,6 +1,18 @@
 // UI module for handling user interface interactions
+import { 
+  formatFrequency, 
+  getMedicineStatus, 
+  getNextDoseInfo,
+  formatDateBR,
+  formatTimeBR,
+  calculateEndDate,
+  getDosesPerDay
+} from './utils.js';
+
 class UIManager {
-  constructor() {
+  constructor(options = {}) {
+    this.storage = options.storage || (typeof storage !== 'undefined' ? storage : null);
+    this.notifications = options.notifications || (typeof notificationManager !== 'undefined' ? notificationManager : null);
     this.initializeEventListeners();
   }
 
@@ -161,7 +173,7 @@ class UIManager {
 
   // Refresh medicines list
   refreshMedicinesList() {
-    const medicines = storage.getMedicines();
+    const medicines = this.storage.getMedicines();
     const container = document.getElementById('medicines-list');
     
     if (medicines.length === 0) {
@@ -178,11 +190,21 @@ class UIManager {
     container.innerHTML = medicines.map(medicine => this.createMedicineCard(medicine)).join('');
   }
 
-  // Create medicine card HTML
+  // Create medicine card HTML - now uses utility functions
   createMedicineCard(medicine) {
-    const status = this.getMedicineStatus(medicine);
-    const nextDose = this.getNextDose(medicine);
-    const endDate = this.calculateEndDate(medicine);
+    const status = getMedicineStatus(medicine);
+    const nextDoseInfo = getNextDoseInfo(medicine);
+    const endDate = formatDateBR(calculateEndDate(medicine.startDate, medicine.durationDays));
+    const frequency = formatFrequency(medicine);
+    const nextDoseTime = nextDoseInfo.nextDose ? formatTimeBR(nextDoseInfo.nextDose) : 'N/A';
+    
+    // Show remaining doses for custom frequency medications
+    const additionalInfo = medicine.frequencyType === 'custom' 
+      ? `<div class="info-item">
+          <span class="info-label">Doses restantes hoje:</span>
+          <span class="info-value">${nextDoseInfo.remainingToday}</span>
+        </div>` 
+      : '';
     
     return `
       <div class="medicine-card ${status.class}" data-medicine-id="${medicine.id}">
@@ -197,16 +219,17 @@ class UIManager {
         <div class="medicine-info">
           <div class="info-item">
             <span class="info-label">Próxima dose:</span>
-            <span class="info-value">${nextDose}</span>
+            <span class="info-value">${nextDoseTime}</span>
           </div>
           <div class="info-item">
             <span class="info-label">Frequência:</span>
-            <span class="info-value">${this.formatFrequency(medicine)}</span>
+            <span class="info-value">${frequency}</span>
           </div>
           <div class="info-item">
             <span class="info-label">Término:</span>
             <span class="info-value">${endDate}</span>
           </div>
+          ${additionalInfo}
         </div>
         
         <div class="medicine-actions">
@@ -224,63 +247,25 @@ class UIManager {
     `;
   }
 
-  // Get medicine status
+  // Get medicine status - using utility function
   getMedicineStatus(medicine) {
-    const now = new Date();
-    const lastDoseTime = this.getLastDoseTime(medicine);
-    
-    if (lastDoseTime < now && !this.isDoseTakenToday(medicine)) {
-      return { class: 'overdue', text: 'Atrasado' };
-    } else if (this.isDoseTakenToday(medicine)) {
-      return { class: 'completed', text: 'Tomado' };
-    } else {
-      return { class: 'active', text: 'Ativo' };
-    }
+    return getMedicineStatus(medicine);
   }
 
-  // Get next dose time
+  // Get next dose time - using utility function
   getNextDose(medicine) {
-    const now = new Date();
-    const [hours, minutes] = medicine.time.split(':');
-    
-    const nextDose = new Date();
-    nextDose.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-    
-    if (nextDose < now) {
-      nextDose.setDate(nextDose.getDate() + 1);
-    }
-    
-    return nextDose.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const nextDoseInfo = getNextDoseInfo(medicine);
+    return nextDoseInfo.nextDose ? formatTimeBR(nextDoseInfo.nextDose) : 'N/A';
   }
 
-  // Calculate end date
+  // Calculate end date - using utility function
   calculateEndDate(medicine) {
-    const startDate = new Date(medicine.startDate);
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + parseInt(medicine.durationDays));
-    
-    return endDate.toLocaleDateString('pt-BR');
+    return formatDateBR(calculateEndDate(medicine.startDate, medicine.durationDays));
   }
 
-  // Format frequency display
+  // Format frequency display - using utility function
   formatFrequency(medicine) {
-    switch (medicine.frequencyType) {
-      case 'daily':
-        return 'Diariamente';
-      case 'specific-days':
-        const days = medicine.specificDays || [];
-        const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-        return days.map(d => dayNames[d]).join(', ');
-      case 'weekly':
-        return 'Semanalmente';
-      case 'custom':
-        return `A cada ${medicine.customInterval} horas`;
-      default:
-        return medicine.frequencyType;
-    }
+    return formatFrequency(medicine);
   }
 
   // Get last dose time
@@ -303,9 +288,9 @@ class UIManager {
 
   // Update dashboard
   updateDashboard() {
-    const medicines = storage.getMedicines();
-    const todayDoses = storage.getTodayDoses();
-    const overdueMedicines = storage.getOverdueMedicines();
+    const medicines = this.storage.getMedicines();
+    const todayDoses = this.storage.getTodayDoses();
+    const overdueMedicines = this.storage.getOverdueMedicines();
     
     document.getElementById('total-medicines').textContent = medicines.length;
     document.getElementById('today-doses').textContent = todayDoses.length;
@@ -313,5 +298,13 @@ class UIManager {
   }
 }
 
-// Create global instance
-window.ui = new UIManager();
+// Export for testing and browser
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { UIManager };
+} else {
+  // Create global instance with default dependencies
+  window.ui = new UIManager({
+    storage: typeof storage !== 'undefined' ? storage : null,
+    notifications: typeof notificationManager !== 'undefined' ? notificationManager : null
+  });
+}
