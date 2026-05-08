@@ -78,6 +78,23 @@
                         </div>
                     </section>
 
+                    <!-- Treatment Timeline Dashboard -->
+                    <section class="treatment-timeline-section">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2><i class="fas fa-calendar-alt"></i> Acompanhamento do Tratamento</h2>
+                                <button id="view-all-doses-btn" class="btn-secondary btn-small">
+                                    <i class="fas fa-list"></i> Ver Todas as Doses
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="treatment-timeline" class="treatment-timeline">
+                                    <!-- Treatment timeline will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
                     <!-- Medicines List -->
                     <section class="medicines-section">
                         <h2><i class="fas fa-list"></i> Seus Remédios</h2>
@@ -146,6 +163,41 @@
             </div>
         </div>
 
+        <!-- All Doses Modal -->
+        <div id="all-doses-modal" class="modal" role="dialog" aria-labelledby="all-doses-title" aria-modal="true">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h3 id="all-doses-title">Todas as Doses Programadas</h3>
+                    <button class="close-btn" onclick="closeAllDosesModal()" aria-label="Fechar modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="treatment-filters">
+                        <div class="filter-group">
+                            <label for="filter-medicine">Filtrar por Medicamento:</label>
+                            <select id="filter-medicine">
+                                <option value="">Todos os medicamentos</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="filter-status">Status:</label>
+                            <select id="filter-status">
+                                <option value="">Todos</option>
+                                <option value="pending">Pendentes</option>
+                                <option value="taken">Tomadas</option>
+                                <option value="overdue">Atrasadas</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="all-doses-list" class="all-doses-list">
+                        <!-- All doses will be populated here -->
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeAllDosesModal()">Fechar</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Notification Permission Modal -->
         <div id="notification-modal" class="modal" role="dialog" aria-labelledby="notification-title" aria-modal="true">
             <div class="modal-content">
@@ -178,6 +230,7 @@
     <script src="js/notifications.js" type="module"></script>
     <script src="js/ui.js" type="module"></script>
     <script src="js/app.js" type="module"></script>
+    <script src="js/dashboard.js" type="module"></script>
     <script src="js/global-functions.js"></script>
 </body>
 </html>
